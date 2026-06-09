@@ -100,11 +100,29 @@ struct CatView: View {
                 .frame(width: 36, height: 34)
                 .offset(y: 28)
 
-            // Body stripes
-            Capsule().fill(darkFur).frame(width: 8, height: 2.5).offset(x: -30, y: 18)
-            Capsule().fill(darkFur).frame(width: 6, height: 2).offset(x: -28, y: 26)
-            Capsule().fill(darkFur).frame(width: 8, height: 2.5).offset(x: 30, y: 18)
-            Capsule().fill(darkFur).frame(width: 6, height: 2).offset(x: 28, y: 26)
+            // Left thigh crease & stripes (defines the hind leg shape, positioned low)
+            Path { path in
+                path.move(to: CGPoint(x: 1.5, y: 1))
+                path.addQuadCurve(to: CGPoint(x: 13.5, y: 19), control: CGPoint(x: 2.0, y: 15))
+            }
+            .stroke(darkFur, style: StrokeStyle(lineWidth: 2.2, lineCap: .round))
+            .frame(width: 15, height: 20)
+            .offset(x: -26, y: 41)
+            
+            Capsule().fill(darkFur).frame(width: 8, height: 2.5).rotationEffect(.degrees(-15)).offset(x: -28, y: 38)
+            Capsule().fill(darkFur).frame(width: 7, height: 2).rotationEffect(.degrees(-15)).offset(x: -29, y: 30)
+
+            // Right thigh crease & stripes (positioned low)
+            Path { path in
+                path.move(to: CGPoint(x: 13.5, y: 1))
+                path.addQuadCurve(to: CGPoint(x: 1.5, y: 19), control: CGPoint(x: 13.0, y: 15))
+            }
+            .stroke(darkFur, style: StrokeStyle(lineWidth: 2.2, lineCap: .round))
+            .frame(width: 15, height: 20)
+            .offset(x: 26, y: 41)
+
+            Capsule().fill(darkFur).frame(width: 8, height: 2.5).rotationEffect(.degrees(15)).offset(x: 28, y: 38)
+            Capsule().fill(darkFur).frame(width: 7, height: 2).rotationEffect(.degrees(15)).offset(x: 29, y: 30)
 
             // Front paws
             RoundedRectangle(cornerRadius: 6)
@@ -189,7 +207,7 @@ struct CatView: View {
                 context.stroke(tip, with: .color(darkFur), style: StrokeStyle(lineWidth: 9, lineCap: .round))
             }
             .frame(width: 32, height: 44)
-            .offset(x: -42, y: -20)
+            .offset(x: -29, y: -20)
 
             // Back legs
             walkingLeg(angle: legAngle2, xOff: -22, yOff: 24, isFar: true)
@@ -205,11 +223,11 @@ struct CatView: View {
                 .frame(width: 70, height: 38)
                 .offset(y: 6)
 
-            // Belly
+            // Belly (small chest-belly patch visible from side)
             Capsule()
                 .fill(belly)
-                .frame(width: 40, height: 18)
-                .offset(y: 14)
+                .frame(width: 25, height: 12)
+                .offset(x: 12, y: 16)
 
             // Body stripes
             Capsule().fill(darkFur).frame(width: 3, height: 10).rotationEffect(.degrees(15)).offset(x: -10, y: 0)
@@ -233,20 +251,13 @@ struct CatView: View {
                     .frame(width: 20, height: 12)
                     .offset(x: 45, y: 6)
 
-                // Ears
+                // Ears (only one ear visible from side profile)
                 ZStack {
                     EarShape(isLeft: true).fill(fur)
                     EarShape(isLeft: true).fill(pink).scaleEffect(0.5, anchor: .bottom).offset(x: 1, y: -2)
                 }
                 .frame(width: 14, height: 18)
-                .offset(x: 30, y: -24)
-
-                ZStack {
-                    EarShape(isLeft: false).fill(fur)
-                    EarShape(isLeft: false).fill(pink).scaleEffect(0.5, anchor: .bottom).offset(x: -1, y: -2)
-                }
-                .frame(width: 14, height: 18)
-                .offset(x: 45, y: -22)
+                .offset(x: 35, y: -24)
 
                 // Forehead stripes
                 HStack(spacing: 1.5) {
@@ -258,9 +269,9 @@ struct CatView: View {
 
                 // Eye (with tracking)
                 ZStack {
-                    Circle().fill(dark).frame(width: 8, height: 8)
-                    Circle().fill(Color.white).frame(width: 3, height: 3)
-                        .offset(x: -1.2 + currentEyeOffsetX * 0.6, y: -1.6 + currentEyeOffsetY * 0.6)
+                    Circle().fill(dark).frame(width: 10, height: 10)
+                    Circle().fill(Color.white).frame(width: 4, height: 4)
+                        .offset(x: -1.5 + currentEyeOffsetX * 0.6, y: -2.0 + currentEyeOffsetY * 0.6)
                 }
                 .offset(x: 47, y: -6)
 
@@ -275,6 +286,7 @@ struct CatView: View {
                 Capsule().fill(whiskerCol).frame(width: 14, height: 1).rotationEffect(.degrees(-8)).offset(x: 64, y: 2)
                 Capsule().fill(whiskerCol).frame(width: 16, height: 1).offset(x: 66, y: 5)
             }
+            .frame(width: 180, height: 180)
             .offset(x: viewModel.headOffsetX * horizScale * 0.5, y: viewModel.headOffsetY * 0.5)
             .rotationEffect(.degrees(viewModel.headRotation * horizScale * 0.5))
         }
@@ -592,8 +604,8 @@ struct CatView: View {
 
         if isSurprised {
             ZStack {
-                Circle().fill(Color.white).frame(width: 11, height: 11)
-                Circle().fill(dark).frame(width: 4, height: 4)
+                Circle().fill(Color.white).frame(width: 14, height: 14)
+                Circle().fill(dark).frame(width: 5, height: 5)
                     .offset(x: currentEyeOffsetX * 0.6, y: currentEyeOffsetY * 0.6)
             }
             .offset(x: xOff, y: yOff)
@@ -610,12 +622,12 @@ struct CatView: View {
             .offset(x: xOff, y: yOff)
         } else {
             ZStack {
-                Circle().fill(dark).frame(width: 11, height: 11)
+                Circle().fill(dark).frame(width: 14, height: 14)
                     .scaleEffect(x: 1.0, y: 1.0 - viewModel.eyeClosedRatio)
-                Circle().fill(Color.white).frame(width: 4, height: 4)
-                    .offset(x: -1.5 + currentEyeOffsetX * 0.6, y: -2 + currentEyeOffsetY * 0.6)
-                Circle().fill(Color.white).frame(width: 2, height: 2)
-                    .offset(x: 1.5 + currentEyeOffsetX * 0.6, y: 1 + currentEyeOffsetY * 0.6)
+                Circle().fill(Color.white).frame(width: 5, height: 5)
+                    .offset(x: -2.0 + currentEyeOffsetX * 0.6, y: -2.5 + currentEyeOffsetY * 0.6)
+                Circle().fill(Color.white).frame(width: 2.5, height: 2.5)
+                    .offset(x: 2.0 + currentEyeOffsetX * 0.6, y: 1.5 + currentEyeOffsetY * 0.6)
             }
             .offset(x: xOff, y: yOff)
         }

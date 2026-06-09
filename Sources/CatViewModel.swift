@@ -49,6 +49,12 @@ class CatViewModel: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.checkGravity()
         }
+
+        // Trigger an initial walk after 3 seconds so the user can test the walking cat immediately
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+            guard let self = self, self.state == .awake, !self.isWalking else { return }
+            self.startWalking()
+        }
     }
 
     // MARK: - Drag
@@ -210,18 +216,18 @@ class CatViewModel: ObservableObject {
 
     private func startActivityTimer() {
         activityTimer?.invalidate()
-        activityTimer = Timer.scheduledTimer(withTimeInterval: 8.0, repeats: true) { [weak self] _ in
+        activityTimer = Timer.scheduledTimer(withTimeInterval: 6.0, repeats: true) { [weak self] _ in
             guard let self = self, self.state != .dragging else { return }
 
             let dice = Double.random(in: 0...1)
             if self.state == .awake && !self.isWalking {
-                if dice < 0.15 {
+                if dice < 0.12 {
                     self.fallAsleep()
-                } else if dice < 0.55 {
+                } else if dice < 0.65 {
                     self.startWalking()
                 }
             } else if self.state == .sleeping {
-                if dice < 0.25 {
+                if dice < 0.35 {
                     self.wakeUp()
                 }
             }
