@@ -61,9 +61,10 @@ struct CatView: View {
                     }
                 }
                 .frame(width: 180, height: 180)
+                .scaleEffect(0.75)
                 Spacer()
             }
-            .frame(width: 200, height: 200)
+            .frame(width: 150, height: 150)
             .scaleEffect(x: (viewModel.state != .dragging && viewModel.isFacingLeft) ? -1.0 : 1.0, y: 1.0)
             .animation(.easeInOut(duration: 0.25), value: viewModel.isFacingLeft)
         }

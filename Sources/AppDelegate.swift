@@ -11,8 +11,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Find visible screen frame
         let screenFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1024, height: 768)
         
-        let windowWidth: CGFloat = 200
-        let windowHeight: CGFloat = 200
+        let windowWidth: CGFloat = 150
+        let windowHeight: CGFloat = 150
         
         // Start near the bottom right of the primary screen
         let initialRect = NSRect(

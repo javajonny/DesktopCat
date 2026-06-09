@@ -391,8 +391,8 @@ class CatViewModel: ObservableObject {
 
                         // Estimate head location on screen
                         let headScreenPos = CGPoint(
-                            x: windowFrame.origin.x + 100,
-                            y: windowFrame.origin.y + 120
+                            x: windowFrame.origin.x + 75,
+                            y: windowFrame.origin.y + 90
                         )
 
                         let mousePos = NSEvent.mouseLocation
