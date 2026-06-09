@@ -17,6 +17,13 @@ class CatViewModel: ObservableObject {
     @Published var zzzList: [ZZZItem] = []
     @Published var isFacingLeft: Bool = false
 
+    // Eye and head tracking offsets/rotations
+    @Published var eyeOffsetX: CGFloat = 0.0
+    @Published var eyeOffsetY: CGFloat = 0.0
+    @Published var headOffsetX: CGFloat = 0.0
+    @Published var headOffsetY: CGFloat = 0.0
+    @Published var headRotation: CGFloat = 0.0
+
     // Walking sub-state and leg animation phase
     @Published var isWalking: Bool = false
     @Published var walkLegPhase: CGFloat = 0.0
@@ -32,10 +39,12 @@ class CatViewModel: ObservableObject {
     private var blinkTimer: Timer?
     private var activityTimer: Timer?
     private var walkingTimer: Timer?
+    private var mouseTrackingTimer: Timer?
 
     init() {
         startBlinkTimer()
         startActivityTimer()
+        startMouseTrackingTimer()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.checkGravity()
@@ -358,6 +367,65 @@ class CatViewModel: ObservableObject {
             if currentStep >= steps {
                 self.isWalking = false
                 timer.invalidate()
+            }
+        }
+    }
+
+    // MARK: - Mouse Tracking
+
+    private func startMouseTrackingTimer() {
+        mouseTrackingTimer?.invalidate()
+        mouseTrackingTimer = Timer.scheduledTimer(withTimeInterval: 0.03, repeats: true) { [weak self] _ in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+
+                var targetEyeX: CGFloat = 0.0
+                var targetEyeY: CGFloat = 0.0
+                var targetHeadX: CGFloat = 0.0
+                var targetHeadY: CGFloat = 0.0
+                var targetHeadRot: CGFloat = 0.0
+
+                if self.state != .sleeping {
+                    if let window = NSApp.windows.first(where: { $0 is CatWindow }) {
+                        let windowFrame = window.frame
+
+                        // Estimate head location on screen
+                        let headScreenPos = CGPoint(
+                            x: windowFrame.origin.x + 100,
+                            y: windowFrame.origin.y + 120
+                        )
+
+                        let mousePos = NSEvent.mouseLocation
+                        let dx = mousePos.x - headScreenPos.x
+                        let dy = mousePos.y - headScreenPos.y
+
+                        let distance = sqrt(dx*dx + dy*dy)
+                        if distance > 1.0 {
+                            let angle = atan2(dy, dx)
+
+                            let eyeMax: CGFloat = 3.5
+                            let headMax: CGFloat = 4.5
+                            let rotMax: CGFloat = 6.0
+
+                            let factor = min(1.0, distance / 180.0)
+
+                            targetEyeX = cos(angle) * eyeMax * factor
+                            targetEyeY = -sin(angle) * eyeMax * factor
+
+                            targetHeadX = cos(angle) * headMax * factor
+                            targetHeadY = -sin(angle) * headMax * factor
+                            targetHeadRot = cos(angle) * rotMax * factor
+                        }
+                    }
+                }
+
+                // Smooth tracking updates (lerp)
+                let ease: CGFloat = self.state == .sleeping ? 0.15 : 0.20
+                self.eyeOffsetX += (targetEyeX - self.eyeOffsetX) * ease
+                self.eyeOffsetY += (targetEyeY - self.eyeOffsetY) * ease
+                self.headOffsetX += (targetHeadX - self.headOffsetX) * ease
+                self.headOffsetY += (targetHeadY - self.headOffsetY) * ease
+                self.headRotation += (targetHeadRot - self.headRotation) * ease
             }
         }
     }

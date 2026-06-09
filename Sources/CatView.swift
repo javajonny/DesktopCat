@@ -215,58 +215,67 @@ struct CatView: View {
             Capsule().fill(darkFur).frame(width: 3, height: 12).offset(x: -2, y: -2)
             Capsule().fill(darkFur).frame(width: 3, height: 10).rotationEffect(.degrees(-15)).offset(x: 6, y: 0)
 
-            // Head (at front/right of body)
-            Ellipse()
-                .fill(fur)
-                .frame(width: 50, height: 44)
-                .offset(x: 40, y: -4)
-
-            // Cheek white
-            Ellipse()
-                .fill(belly)
-                .frame(width: 20, height: 12)
-                .offset(x: 45, y: 6)
-
-            // Ears
-            ZStack {
-                EarShape(isLeft: true).fill(fur)
-                EarShape(isLeft: true).fill(pink).scaleEffect(0.5, anchor: .bottom).offset(x: 1, y: -2)
-            }
-            .frame(width: 14, height: 18)
-            .offset(x: 30, y: -24)
+            // Head (at front/right of body, grouped to allow wiggling and eye-tracking)
+            let horizScale = (viewModel.state != .dragging && viewModel.isFacingLeft) ? -1.0 : 1.0
+            let currentEyeOffsetX = viewModel.eyeOffsetX * horizScale
+            let currentEyeOffsetY = viewModel.eyeOffsetY
 
             ZStack {
-                EarShape(isLeft: false).fill(fur)
-                EarShape(isLeft: false).fill(pink).scaleEffect(0.5, anchor: .bottom).offset(x: -1, y: -2)
+                Ellipse()
+                    .fill(fur)
+                    .frame(width: 50, height: 44)
+                    .offset(x: 40, y: -4)
+
+                // Cheek white
+                Ellipse()
+                    .fill(belly)
+                    .frame(width: 20, height: 12)
+                    .offset(x: 45, y: 6)
+
+                // Ears
+                ZStack {
+                    EarShape(isLeft: true).fill(fur)
+                    EarShape(isLeft: true).fill(pink).scaleEffect(0.5, anchor: .bottom).offset(x: 1, y: -2)
+                }
+                .frame(width: 14, height: 18)
+                .offset(x: 30, y: -24)
+
+                ZStack {
+                    EarShape(isLeft: false).fill(fur)
+                    EarShape(isLeft: false).fill(pink).scaleEffect(0.5, anchor: .bottom).offset(x: -1, y: -2)
+                }
+                .frame(width: 14, height: 18)
+                .offset(x: 45, y: -22)
+
+                // Forehead stripes
+                HStack(spacing: 1.5) {
+                    RoundedRectangle(cornerRadius: 1).fill(darkFur).frame(width: 2, height: 5)
+                    RoundedRectangle(cornerRadius: 1).fill(darkFur).frame(width: 2, height: 7)
+                    RoundedRectangle(cornerRadius: 1).fill(darkFur).frame(width: 2, height: 5)
+                }
+                .offset(x: 38, y: -20)
+
+                // Eye (with tracking)
+                ZStack {
+                    Circle().fill(dark).frame(width: 8, height: 8)
+                    Circle().fill(Color.white).frame(width: 3, height: 3)
+                        .offset(x: -1.2 + currentEyeOffsetX * 0.6, y: -1.6 + currentEyeOffsetY * 0.6)
+                }
+                .offset(x: 47, y: -6)
+
+                // Nose
+                Triangle()
+                    .fill(pink)
+                    .frame(width: 4.5, height: 3.5)
+                    .rotationEffect(.degrees(180))
+                    .offset(x: 56, y: -1)
+
+                // Whiskers
+                Capsule().fill(whiskerCol).frame(width: 14, height: 1).rotationEffect(.degrees(-8)).offset(x: 64, y: 2)
+                Capsule().fill(whiskerCol).frame(width: 16, height: 1).offset(x: 66, y: 5)
             }
-            .frame(width: 14, height: 18)
-            .offset(x: 45, y: -22)
-
-            // Forehead stripes
-            HStack(spacing: 1.5) {
-                RoundedRectangle(cornerRadius: 1).fill(darkFur).frame(width: 2, height: 5)
-                RoundedRectangle(cornerRadius: 1).fill(darkFur).frame(width: 2, height: 7)
-                RoundedRectangle(cornerRadius: 1).fill(darkFur).frame(width: 2, height: 5)
-            }
-            .offset(x: 38, y: -20)
-
-            // Eye
-            ZStack {
-                Circle().fill(dark).frame(width: 8, height: 8)
-                Circle().fill(Color.white).frame(width: 3, height: 3).offset(x: -1.2, y: -1.6)
-            }
-            .offset(x: 47, y: -6)
-
-            // Nose
-            Triangle()
-                .fill(pink)
-                .frame(width: 4.5, height: 3.5)
-                .rotationEffect(.degrees(180))
-                .offset(x: 56, y: -1)
-
-            // Whiskers
-            Capsule().fill(whiskerCol).frame(width: 14, height: 1).rotationEffect(.degrees(-8)).offset(x: 64, y: 2)
-            Capsule().fill(whiskerCol).frame(width: 16, height: 1).offset(x: 66, y: 5)
+            .offset(x: viewModel.headOffsetX * horizScale * 0.5, y: viewModel.headOffsetY * 0.5)
+            .rotationEffect(.degrees(viewModel.headRotation * horizScale * 0.5))
         }
     }
 
@@ -495,7 +504,9 @@ struct CatView: View {
     // ──────────────────────────────────────────────
 
     private func catHead(eyeYOff: CGFloat, headYOff: CGFloat, earYOff: CGFloat, showWhiskers: Bool, isOpenMouth: Bool = false, isSurprised: Bool = false) -> some View {
-        ZStack {
+        let horizScale = (viewModel.state != .dragging && viewModel.isFacingLeft) ? -1.0 : 1.0
+
+        return ZStack {
             // Ears
             ZStack {
                 EarShape(isLeft: true).fill(fur)
@@ -566,16 +577,23 @@ struct CatView: View {
                 Capsule().fill(whiskerCol).frame(width: 20, height: 1.2).rotationEffect(.degrees(-8)).offset(x: 32, y: headYOff + 12)
             }
         }
+        .offset(x: viewModel.headOffsetX * horizScale, y: viewModel.headOffsetY)
+        .rotationEffect(.degrees(viewModel.headRotation * horizScale))
     }
 
     // MARK: - Eye helper
 
     @ViewBuilder
     private func awakeEye(xOff: CGFloat, yOff: CGFloat, isSurprised: Bool = false) -> some View {
+        let horizScale = (viewModel.state != .dragging && viewModel.isFacingLeft) ? -1.0 : 1.0
+        let currentEyeOffsetX = viewModel.eyeOffsetX * horizScale
+        let currentEyeOffsetY = viewModel.eyeOffsetY
+
         if isSurprised {
             ZStack {
                 Circle().fill(Color.white).frame(width: 11, height: 11)
                 Circle().fill(dark).frame(width: 4, height: 4)
+                    .offset(x: currentEyeOffsetX * 0.6, y: currentEyeOffsetY * 0.6)
             }
             .offset(x: xOff, y: yOff)
         } else if viewModel.eyeClosedRatio > 0.8 {
@@ -593,8 +611,10 @@ struct CatView: View {
             ZStack {
                 Circle().fill(dark).frame(width: 11, height: 11)
                     .scaleEffect(x: 1.0, y: 1.0 - viewModel.eyeClosedRatio)
-                Circle().fill(Color.white).frame(width: 4, height: 4).offset(x: -1.5, y: -2)
-                Circle().fill(Color.white).frame(width: 2, height: 2).offset(x: 1.5, y: 1)
+                Circle().fill(Color.white).frame(width: 4, height: 4)
+                    .offset(x: -1.5 + currentEyeOffsetX * 0.6, y: -2 + currentEyeOffsetY * 0.6)
+                Circle().fill(Color.white).frame(width: 2, height: 2)
+                    .offset(x: 1.5 + currentEyeOffsetX * 0.6, y: 1 + currentEyeOffsetY * 0.6)
             }
             .offset(x: xOff, y: yOff)
         }
