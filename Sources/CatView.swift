@@ -78,28 +78,8 @@ struct CatView: View {
             // Ground shadow
             Ellipse().fill(shadowCol).frame(width: 80, height: 7).offset(y: 56)
 
-            // Tail behind body
-            Canvas { context, size in
-                var path = Path()
-                path.move(to: CGPoint(x: size.width * 0.2, y: size.height * 0.95))
-                path.addCurve(
-                    to: CGPoint(x: size.width * 0.85, y: size.height * 0.1 + tailSwing),
-                    control1: CGPoint(x: size.width * 0.5, y: size.height * 1.0),
-                    control2: CGPoint(x: size.width * 1.0, y: size.height * 0.35)
-                )
-                context.stroke(path, with: .color(fur), style: StrokeStyle(lineWidth: 12, lineCap: .round))
-                
-                var tip = Path()
-                tip.move(to: CGPoint(x: size.width * 0.7, y: size.height * 0.2 + tailSwing * 0.7))
-                tip.addCurve(
-                    to: CGPoint(x: size.width * 0.85, y: size.height * 0.1 + tailSwing),
-                    control1: CGPoint(x: size.width * 0.8, y: size.height * 0.15 + tailSwing * 0.8),
-                    control2: CGPoint(x: size.width * 0.9, y: size.height * 0.12 + tailSwing)
-                )
-                context.stroke(tip, with: .color(darkFur), style: StrokeStyle(lineWidth: 12, lineCap: .round))
-            }
-            .frame(width: 50, height: 60)
-            .offset(x: 26, y: 14)
+            // Tail behind body (redesigned with a smooth curve and gradual tip transition)
+            sittingTail
 
             // Lower body (wide haunches)
             Ellipse()
@@ -139,6 +119,40 @@ struct CatView: View {
             // Head
             catHead(eyeYOff: -15, headYOff: -14, earYOff: -34, showWhiskers: true)
         }
+    }
+
+    private func calculateSubsegment(p0: CGPoint, p1: CGPoint, p2: CGPoint, t0: CGFloat) -> (q0: CGPoint, q1: CGPoint, q2: CGPoint) {
+        let mt = 1.0 - t0
+        let q0x = mt * mt * p0.x + 2.0 * mt * t0 * p1.x + t0 * t0 * p2.x
+        let q0y = mt * mt * p0.y + 2.0 * mt * t0 * p1.y + t0 * t0 * p2.y
+        let q1x = mt * p1.x + t0 * p2.x
+        let q1y = mt * p1.y + t0 * p2.y
+        return (CGPoint(x: q0x, y: q0y), CGPoint(x: q1x, y: q1y), p2)
+    }
+
+    private var sittingTail: some View {
+        Canvas { context, size in
+            let t0: CGFloat = 0.82
+            
+            let p0 = CGPoint(x: size.width * 0.2, y: size.height * 0.95)
+            let p1 = CGPoint(x: size.width * 0.75, y: size.height * 0.8)
+            let p2 = CGPoint(x: size.width * 0.9, y: size.height * 0.15 + tailSwing)
+            
+            var path = Path()
+            path.move(to: p0)
+            path.addQuadCurve(to: p2, control: p1)
+            context.stroke(path, with: .color(fur), style: StrokeStyle(lineWidth: 12, lineCap: .round))
+            
+            // Calculate mathematically exact subsegment control points for the tip (from t = t0 to 1)
+            let sub = calculateSubsegment(p0: p0, p1: p1, p2: p2, t0: t0)
+            
+            var tip = Path()
+            tip.move(to: sub.q0)
+            tip.addQuadCurve(to: sub.q2, control: sub.q1)
+            context.stroke(tip, with: .color(darkFur), style: StrokeStyle(lineWidth: 12, lineCap: .round))
+        }
+        .frame(width: 50, height: 60)
+        .offset(x: 26, y: 14)
     }
 
     // ──────────────────────────────────────────────
@@ -397,25 +411,25 @@ struct CatView: View {
         let sway = viewModel.dragTilt * 0.7
 
         return ZStack {
-            // Tail hanging down (with dark tip added at bottom end)
+            // Tail hanging down (drawn with padding to prevent rounded linecaps from being clipped at bottom)
             Canvas { context, size in
+                let t0: CGFloat = 0.82
+                
+                let p0 = CGPoint(x: size.width / 2, y: 6)
+                let p1 = CGPoint(x: size.width / 2 + 6, y: size.height * 0.5)
+                let p2 = CGPoint(x: size.width / 2 - 8, y: size.height - 8)
+                
                 var path = Path()
-                path.move(to: CGPoint(x: size.width / 2, y: 6))
-                path.addQuadCurve(
-                    to: CGPoint(x: size.width / 2 - 8, y: size.height - 8),
-                    control: CGPoint(x: size.width / 2 + 6, y: size.height * 0.5)
-                )
+                path.move(to: p0)
+                path.addQuadCurve(to: p2, control: p1)
                 context.stroke(path, with: .color(fur), style: StrokeStyle(lineWidth: 10, lineCap: .round))
-
-                // Dark tip
+                
+                // Calculate mathematically exact subsegment control points for the tip (from t = t0 to 1)
+                let sub = calculateSubsegment(p0: p0, p1: p1, p2: p2, t0: t0)
+                
                 var tip = Path()
-                let startX = size.width / 2 - 3.5
-                let startY = size.height * 0.65
-                tip.move(to: CGPoint(x: startX, y: startY))
-                tip.addQuadCurve(
-                    to: CGPoint(x: size.width / 2 - 8, y: size.height - 8),
-                    control: CGPoint(x: size.width / 2 - 3, y: size.height * 0.8)
-                )
+                tip.move(to: sub.q0)
+                tip.addQuadCurve(to: sub.q2, control: sub.q1)
                 context.stroke(tip, with: .color(darkFur), style: StrokeStyle(lineWidth: 10, lineCap: .round))
             }
             .frame(width: 36, height: 60)
